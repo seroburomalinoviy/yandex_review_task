@@ -7,6 +7,18 @@ from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
 
+def test_extract():
+    assert extract(), "Ошибка в функции extract()"
+
+
+def test_transform():
+    assert transform(*extract()), "Ошибка в функции transform()"
+
+
+def test_load():
+    assert load(transform(*extract())), "Загрузка в индекс прошла неуспешно"
+
+
 def extract() -> tuple[dict[str, str], dict[str, str], list[tuple]]:
     """
     extract data from sql-db
@@ -128,4 +140,7 @@ def load(acts: list[dict]) -> bool:
 
 
 if __name__ == '__main__':
+    test_extract()
+    test_transform()
+    test_load()
     load(transform(*extract()))  # тяжелый по памяти подход
