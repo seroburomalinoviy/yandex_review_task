@@ -1,7 +1,7 @@
 from flask import Flask, abort, request, jsonify
 import elasticsearch as ES
 
-from validate import validate_args
+# from validate import validate_args
 
 app = Flask(__name__)
 
@@ -12,10 +12,10 @@ def index():
 
 @app.route('/api/movies/')
 def movie_list():
-    validate = validate_args(request.args)
-
-    if not validate['success']:
-        return abort(422)
+    # validate = validate_args(request.args)
+    #
+    # if not validate['success']:
+    #     return abort(422)
 
     defaults = {
         'limit': 50,
@@ -81,4 +81,4 @@ def get_movie(movie_id):
     return abort(404)
 
 if __name__ == "__main__":
-    app.run(host='127.0.1.1', port=8000)
+    app.run(host='127.0.0.1', port=8000)
