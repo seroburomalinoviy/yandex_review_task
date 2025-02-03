@@ -5,7 +5,7 @@ from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
 
-def extract():
+def extract() -> tuple[dict[str, str], dict[str, str], list[tuple]]:
     """
     extract data from sql-db
     :return:
@@ -44,16 +44,16 @@ def extract():
     return actors, writers, raw_data
 
 
-def transform(__actors, __writers, __raw_data):
+def transform(actors: dict[str, str], writers: dict[str, str], raw_data: list[tuple]) -> list[dict]:
     """
-
-    :param __actors:
-    :param __writers:
-    :param __raw_data:
+    Заполнение индекса по известному шаблону
+    :param actors:
+    :param writers:
+    :param raw_data:
     :return:
     """
     documents_list = []
-    for movie_info in __raw_data:
+    for movie_info in raw_data:
         # Разыменование списка
         movie_id, imdb_rating, genre, title, description, director, raw_actors, raw_writers = movie_info
 
@@ -63,8 +63,8 @@ def transform(__actors, __writers, __raw_data):
         else:
             new_writers = raw_writers
 
-        writers_list = [(writer_id, __writers.get(writer_id)) for writer_id in new_writers.split(',')]
-        actors_list = [(actor_id, __actors.get(int(actor_id))) for actor_id in raw_actors.split(',')]
+        writers_list = [(writer_id, writers.get(writer_id)) for writer_id in new_writers.split(',')]
+        actors_list = [(actor_id, actors.get(int(actor_id))) for actor_id in raw_actors.split(',')]
 
         document = {
             "_index": "movies",
@@ -107,9 +107,9 @@ def transform(__actors, __writers, __raw_data):
     return documents_list
 
 
-def load(acts):
+def load(acts: list[dict]) -> bool:
     """
-
+    Загрузка всех данных из бд в индекс
     :param acts:
     :return:
     """
