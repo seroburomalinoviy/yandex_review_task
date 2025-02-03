@@ -1,11 +1,25 @@
 import sqlite3
 import json
 
+import uuid
+
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
 
-def extract():
+def test_extract():
+    assert extract(), "Ошибка в функции extract()"
+
+
+def test_transform():
+    assert transform(*extract()), "Ошибка в функции transform()"
+
+
+def test_load():
+    assert load(transform(*extract())), "Загрузка в индекс прошла неуспешно"
+
+
+def extract() -> tuple[dict[str, str], dict[str, str], list[tuple]]:
     """
     extract data from sql-db
     :return:
@@ -32,7 +46,7 @@ def extract():
         from movies
     """)
 
-    raw_data = cursor.fetchall()
+    raw_data = cursor.fetchall()  # выполняется выгрузка всех строк за один запрос
 
     # cursor.execute('pragma table_info(movies)')
     # pprint(cursor.fetchall())
@@ -44,16 +58,16 @@ def extract():
     return actors, writers, raw_data
 
 
-def transform(__actors, __writers, __raw_data):
+def transform(actors: dict[str, str], writers: dict[str, str], raw_data: list[tuple]) -> list[dict]:
     """
-
-    :param __actors:
-    :param __writers:
-    :param __raw_data:
+    Заполнение индекса по известному шаблону
+    :param actors:
+    :param writers:
+    :param raw_data:
     :return:
     """
     documents_list = []
-    for movie_info in __raw_data:
+    for movie_info in raw_data:
         # Разыменование списка
         movie_id, imdb_rating, genre, title, description, director, raw_actors, raw_writers = movie_info
 
@@ -63,18 +77,24 @@ def transform(__actors, __writers, __raw_data):
         else:
             new_writers = raw_writers
 
-        writers_list = [(writer_id, __writers.get(writer_id)) for writer_id in new_writers.split(',')]
-        actors_list = [(actor_id, __actors.get(int(actor_id))) for actor_id in raw_actors.split(',')]
+        writers_list = [(writer_id, writers.get(writer_id)) for writer_id in new_writers.split(',')]
+        actors_list = [(actor_id, actors.get(int(actor_id))) for actor_id in raw_actors.split(',')]
 
         document = {
             "_index": "movies",
             "_id": movie_id,
             "id": movie_id,
-            "imdb_rating": imdb_rating,
-            "genre": genre.split(', '),
+            "imdb_rating": float(imdb_rating),
+            "genres": genre,
             "title": title,
             "description": description,
-            "director": director,
+            "directors": [
+                {
+                    "id": uuid.uuid4(),
+                    "name": director
+                }
+            ],
+            "directors_names": director,
             "actors": [
                 {
                     "id": actor[0],
@@ -107,9 +127,9 @@ def transform(__actors, __writers, __raw_data):
     return documents_list
 
 
-def load(acts):
+def load(acts: list[dict]) -> bool:
     """
-
+    Загрузка всех данных из бд в индекс
     :param acts:
     :return:
     """
@@ -120,4 +140,7 @@ def load(acts):
 
 
 if __name__ == '__main__':
-    load(transform(*extract()))
+    test_extract()
+    test_transform()
+    test_load()
+    load(transform(*extract()))  # тяжелый по памяти подход
