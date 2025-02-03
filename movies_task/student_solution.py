@@ -1,6 +1,8 @@
 import sqlite3
 import json
 
+import uuid
+
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
@@ -70,11 +72,17 @@ def transform(actors: dict[str, str], writers: dict[str, str], raw_data: list[tu
             "_index": "movies",
             "_id": movie_id,
             "id": movie_id,
-            "imdb_rating": imdb_rating,
-            "genre": genre.split(', '),
+            "imdb_rating": float(imdb_rating),
+            "genres": genre,
             "title": title,
             "description": description,
-            "director": director,
+            "directors": [
+                {
+                    "id": uuid.uuid4(),
+                    "name": director
+                }
+            ],
+            "directors_names": director,
             "actors": [
                 {
                     "id": actor[0],
