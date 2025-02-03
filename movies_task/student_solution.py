@@ -32,7 +32,7 @@ def extract():
         from movies
     """)
 
-    raw_data = cursor.fetchall()
+    raw_data = cursor.fetchall()  # выполняется выгрузка всех строк за один запрос
 
     # cursor.execute('pragma table_info(movies)')
     # pprint(cursor.fetchall())
@@ -120,4 +120,4 @@ def load(acts):
 
 
 if __name__ == '__main__':
-    load(transform(*extract()))
+    load(transform(*extract()))  # тяжелый по памяти подход
